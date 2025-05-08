@@ -5,18 +5,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing URL parameter" });
   }
 
-  const apiKey = process.env.SCRAPER_API_KEY;
-  const proxyUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(originalUrl)}`;
-
   try {
-    const response = await fetch(proxyUrl);
+    const response = await fetch(originalUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+        "Accept": "text/html",
+      },
+    });
+
     const html = await response.text();
 
-    const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
-    const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
 
-    const title = titleMatch ? titleMatch[1] : null;
-    const image = imageMatch ? imageMatch[1] : null;
+    const title = titleMatch ? titleMatch[1].replace(" | GoFundMe", "").trim() : null;
+    const image = ogImageMatch ? ogImageMatch[1] : null;
 
     if (!title) {
       return res.status(200).json({ error: "Unable to extract campaign title." });
