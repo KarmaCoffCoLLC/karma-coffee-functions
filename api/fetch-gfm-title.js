@@ -1,28 +1,26 @@
 export default async function handler(req, res) {
-  const { url } = req.query;
+  const url = req.query.url;
 
-  if (!url || !url.includes('gofundme.com')) {
-    return res.status(400).json({ error: 'Invalid GoFundMe URL.' });
+  if (!url) {
+    return res.status(400).json({ error: "Missing URL parameter" });
   }
 
   try {
     const response = await fetch(url);
     const html = await response.text();
 
-    // Try og:title first
-    const ogTitleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
-    if (ogTitleMatch && ogTitleMatch[1]) {
-      return res.status(200).json({ title: ogTitleMatch[1] });
+    const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
+    const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
+
+    const title = titleMatch ? titleMatch[1] : null;
+    const image = imageMatch ? imageMatch[1] : null;
+
+    if (!title) {
+      return res.status(200).json({ error: "Unable to extract campaign title." });
     }
 
-    // Fallback to <title>
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    if (titleMatch && titleMatch[1]) {
-      return res.status(200).json({ title: titleMatch[1].replace(" | GoFundMe", "").trim() });
-    }
-
-    return res.status(404).json({ error: 'Unable to extract campaign title.' });
-  } catch (error) {
-    return res.status(500).json({ error: 'Server error while fetching campaign.' });
+    return res.status(200).json({ title, image });
+  } catch (err) {
+    return res.status(500).json({ error: "Internal error: " + err.message });
   }
 }
