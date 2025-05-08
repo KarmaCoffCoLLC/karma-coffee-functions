@@ -24,7 +24,18 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    // Try to get the visible campaign title from the real content
+    const visibleTitleMatch = html.match(/<h1[^>]*class="[^"]*p-campaign-title[^"]*"[^>]*>(.*?)<\/h1>/i);
+    
+    // Fallback to <title> if needed
+    const fallbackTitleMatch = html.match(/<title>(.*?)<\/title>/i);
+    
+    const title = visibleTitleMatch
+      ? visibleTitleMatch[1].trim()
+      : fallbackTitleMatch
+        ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
+        : null;
+
     const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
 
     const title = titleMatch ? titleMatch[1].replace(" | GoFundMe", "").trim() : null;
