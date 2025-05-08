@@ -5,9 +5,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing URL parameter" });
   }
 
-  const apiKey = process.env.SCRAPER_API_KEY; // Add this in Vercel env vars
-  const targetUrl = encodeURIComponent(originalUrl);
-  const proxyUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${targetUrl}`;
+  const apiKey = process.env.SCRAPER_API_KEY;
+  const proxyUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(originalUrl)}`;
 
   try {
     const response = await fetch(proxyUrl);
