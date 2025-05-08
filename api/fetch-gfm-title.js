@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(url);
+const response = await fetch(url.replace("www.gofundme.com", "www.gofundme.com/m"));
     const html = await response.text();
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
