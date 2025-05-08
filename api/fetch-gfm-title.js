@@ -10,12 +10,13 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(mobileUrl, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-      },
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/90.0.4430.212 Safari/537.36"
+      }
     });
 
     const html = await response.text();
+
+    console.log("HTML Response:", html.slice(0, 1000)); // Show first 1000 chars
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
     const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
