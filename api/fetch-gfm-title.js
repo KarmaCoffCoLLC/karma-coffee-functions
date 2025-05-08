@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // CORS headers
+  // ✅ Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -8,26 +8,25 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const originalUrl = req.query.url;
+  const originalUrl = decodeURIComponent((req.query.url || "").trim());
 
-  if (!originalUrl) {
-    return res.status(400).json({ error: "Missing URL parameter" });
+  if (!originalUrl || !originalUrl.startsWith("http")) {
+    return res.status(400).json({ error: "Missing or invalid URL parameter" });
   }
 
-  const response = await fetch(originalUrl, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": "https://www.gofundme.com/",
-    },
-  });
-
+  try {
+    const response = await fetch(originalUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.gofundme.com/",
+      },
+    });
 
     const html = await response.text();
 
-    // Try to get the real visible title from GoFundMe's h1 tag
     const h1TitleMatch = html.match(/<h1[^>]*class="[^"]*p-campaign-title[^"]*"[^>]*>(.*?)<\/h1>/i);
     const fallbackTitleMatch = html.match(/<title>(.*?)<\/title>/i);
     const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
@@ -35,8 +34,8 @@ export default async function handler(req, res) {
     const title = h1TitleMatch
       ? decodeEntities(h1TitleMatch[1].trim())
       : fallbackTitleMatch
-      ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
-      : null;
+        ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
+        : null;
 
     const image = ogImageMatch ? ogImageMatch[1] : null;
 
@@ -46,12 +45,11 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ title, image });
   } catch (err) {
-    console.error("Error fetching GoFundMe:", err);
+    console.error("Fetch error:", err.message);
     return res.status(500).json({ error: "Internal error: " + err.message });
   }
 }
 
-// HTML entity decoder (handles things like &amp;)
 function decodeEntities(str) {
   return str.replace(/&#?(\w+);/g, (_, entity) => {
     const entities = {
