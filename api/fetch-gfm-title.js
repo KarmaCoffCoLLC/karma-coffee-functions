@@ -11,14 +11,12 @@ export default async function handler(req, res) {
     const response = await fetch(mobileUrl, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
       },
     });
 
     const html = await response.text();
-
-    // 👇 This is the new line that will log HTML output to Vercel logs
-    console.log(html);
+    console.log(html); // Keep this for troubleshooting
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
     const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
