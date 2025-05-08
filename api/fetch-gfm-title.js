@@ -1,12 +1,14 @@
 export default async function handler(req, res) {
-  const url = req.query.url;
+  const originalUrl = req.query.url;
 
-  if (!url) {
+  if (!originalUrl) {
     return res.status(400).json({ error: "Missing URL parameter" });
   }
 
+  const mobileUrl = originalUrl.replace("www.gofundme.com", "www.gofundme.com/m");
+
   try {
-const response = await fetch(url.replace("www.gofundme.com", "www.gofundme.com/m"));
+    const response = await fetch(mobileUrl);
     const html = await response.text();
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
