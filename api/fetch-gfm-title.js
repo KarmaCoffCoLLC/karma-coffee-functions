@@ -17,9 +17,11 @@ export default async function handler(req, res) {
     const html = await response.text();
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    console.log("Fetched the title match" + titleMatch);
     const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
 
     const title = titleMatch ? titleMatch[1].replace(" | GoFundMe", "").trim() : null;
+    console.log("Fetched the title" + title);
     const image = ogImageMatch ? ogImageMatch[1] : null;
 
     if (!title) {
