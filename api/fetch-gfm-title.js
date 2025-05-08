@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -18,27 +19,23 @@ export default async function handler(req, res) {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-        "Accept": "text/html",
+        Accept: "text/html",
       },
     });
 
     const html = await response.text();
 
-    // Try to get the visible campaign title from the real content
-    const visibleTitleMatch = html.match(/<h1[^>]*class="[^"]*p-campaign-title[^"]*"[^>]*>(.*?)<\/h1>/i);
-    
-    // Fallback to <title> if needed
+    // Try to get the real visible title from GoFundMe's h1 tag
+    const h1TitleMatch = html.match(/<h1[^>]*class="[^"]*p-campaign-title[^"]*"[^>]*>(.*?)<\/h1>/i);
     const fallbackTitleMatch = html.match(/<title>(.*?)<\/title>/i);
-    
-    const title = visibleTitleMatch
-      ? visibleTitleMatch[1].trim()
-      : fallbackTitleMatch
-        ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
-        : null;
-
     const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
 
-    const title = titleMatch ? titleMatch[1].replace(" | GoFundMe", "").trim() : null;
+    const title = h1TitleMatch
+      ? decodeEntities(h1TitleMatch[1].trim())
+      : fallbackTitleMatch
+      ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
+      : null;
+
     const image = ogImageMatch ? ogImageMatch[1] : null;
 
     if (!title) {
@@ -47,7 +44,21 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ title, image });
   } catch (err) {
-    console.error("Fetch failed:", err);
+    console.error("Error fetching GoFundMe:", err);
     return res.status(500).json({ error: "Internal error: " + err.message });
   }
+}
+
+// HTML entity decoder (handles things like &amp;)
+function decodeEntities(str) {
+  return str.replace(/&#?(\w+);/g, (_, entity) => {
+    const entities = {
+      amp: "&",
+      lt: "<",
+      gt: ">",
+      quot: '"',
+      apos: "'",
+    };
+    return entities[entity] || _;
+  });
 }
