@@ -5,18 +5,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing URL parameter" });
   }
 
-  const mobileUrl = originalUrl.replace("www.gofundme.com", "www.gofundme.com/m");
+  const apiKey = process.env.SCRAPER_API_KEY; // Add this in Vercel env vars
+  const targetUrl = encodeURIComponent(originalUrl);
+  const proxyUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${targetUrl}`;
 
   try {
-    const response = await fetch(mobileUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-      },
-    });
-
+    const response = await fetch(proxyUrl);
     const html = await response.text();
-    console.log(html); // Keep this for troubleshooting
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
     const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
