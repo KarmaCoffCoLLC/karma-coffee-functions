@@ -8,7 +8,13 @@ export default async function handler(req, res) {
   const mobileUrl = originalUrl.replace("www.gofundme.com", "www.gofundme.com/m");
 
   try {
-    const response = await fetch(mobileUrl);
+    const response = await fetch(mobileUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+      }
+    });
+
     const html = await response.text();
 
     const titleMatch = html.match(/<meta property="og:title" content="(.*?)"/i);
