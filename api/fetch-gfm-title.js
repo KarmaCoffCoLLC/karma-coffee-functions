@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // ✅ Set CORS headers
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -27,17 +27,31 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
+    // Extract title from visible H1 tag
     const h1TitleMatch = html.match(/<h1[^>]*class="[^"]*p-campaign-title[^"]*"[^>]*>(.*?)<\/h1>/i);
     const fallbackTitleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
-
-    const title = h1TitleMatch
+    let title = h1TitleMatch
       ? decodeEntities(h1TitleMatch[1].trim())
       : fallbackTitleMatch
-        ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
-        : null;
+      ? fallbackTitleMatch[1].replace(" | GoFundMe", "").trim()
+      : null;
 
-    const image = ogImageMatch ? ogImageMatch[1] : null;
+    // Extract image from __NEXT_DATA__ embedded JSON
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/);
+    let image = null;
+
+    if (nextDataMatch) {
+      try {
+        const json = JSON.parse(nextDataMatch[1]);
+        image = json.props?.pageProps?.campaign?.imageUrl || null;
+      } catch (err) {
+        console.warn("Could not parse __NEXT_DATA__ JSON:", err);
+      }
+    }
+
+    // Fallback to og:image if NEXT_DATA fails
+    const ogImageMatch = html.match(/<meta property="og:image" content="(.*?)"/i);
+    image = image || (ogImageMatch ? ogImageMatch[1] : null);
 
     if (!title) {
       return res.status(200).json({ error: "Unable to extract campaign title." });
