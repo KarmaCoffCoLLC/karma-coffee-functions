@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       : null;
 
     // Extract image from __NEXT_DATA__ embedded JSON
-    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/);
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
     let image = null;
 
     if (nextDataMatch) {
